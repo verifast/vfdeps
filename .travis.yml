@@ -4,6 +4,7 @@ git:
 language: C
 
 os:
+  - linux
   - osx
 
 dist: trusty
