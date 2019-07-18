@@ -1,0 +1,25 @@
+git:
+  depth: 100
+
+language: C
+
+os:
+  - osx
+
+dist: trusty
+
+sudo: required
+
+install:
+  - ./setup-build.sh
+
+script:
+  - ./build.sh
+
+deploy:
+  provider: bintray
+  file: bintray.json
+  user: bart-jacobs
+  key:
+    secure: "QkwAuhKij0Pi3gLvY6Y2wPV9GiieFii0f5YHkNoN2boQTR8QFqM49xo9q9OYwDxUq3zIcphJOR9l4Dx8ol7sF3OhSxqqmNHCMskwmU1O7MO6BixKuh9qvj5uhQKwqQuuZLv2A/exAaX4O+IdkMKoOyRRvbfPmGoSmi8J6siJjadsq2C3kG712Bd4WcIDb3al8MGugmSb9mSr5lUEkn5mg3ghEgDlwXuaWTVkcRfalTN7EJQ/Y/JYxjdFNdP7APxhI1wU9e0GKsXYIo8cEmV8FZfepHs2wUNsMDe+QZLPskbOKUoOuVF5odu4sRM7bM2fqDcjcqfNtoj4YB5VIK/aSU4a/kfhFMcJ8UcVR/IbhVZcwSD7kxW3JbSSlS6MLILxQnqxQoXiNTbv31aEM96OsEioTpWgy8DHKpssHKlJtGQgC1qI+EZ1jb68KbGo55hjyph0zZZDPEs0Ma755Zdb9NRWjtIltHRZv9wwdkZGAb1iHflMgZa/AFFkVjQrLSCr+pkjKNW6nbmThJHHbtig7j2D54fN0OeJ67pQhWrKPqYzwm0ybeNWvrTVjYksZw321MpCPcAY9R7Nftp3hIwyOLcyEN/zmL4/AQkl0RnUqUsHJzcADNrBeZvnqdVLYL6dYX6ENoRbsYO0csW7TZAilms/CdYWVfy2Wk8rCSb1np4="
+  skip_cleanup: true
