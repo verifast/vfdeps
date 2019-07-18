@@ -20,8 +20,7 @@ elif [ $(uname -s) = "Darwin" ]; then
     UPLOAD_DIR=$BUILD_DIR/upload
     sudo mkdir $VFDEPS_DIR
     sudo chown -R $(whoami):admin /usr/local/*
-    # make PREFIX=$VFDEPS_DIR
-    echo "Test contents" > $VFDEPS_DIR/test.txt
+    make PREFIX=$VFDEPS_DIR
     VFDEPS_FILENAME=$VFDEPS_DIRNAME-macos.txz
     VFDEPS_FILEPATH=$UPLOAD_DIR/$VFDEPS_FILENAME
     cd /usr/local
