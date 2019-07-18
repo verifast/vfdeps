@@ -1,0 +1,2 @@
+# vfdeps
+Dependencies for VeriFast
