@@ -7,12 +7,18 @@ pwd
 VFDEPS_VERSION=`git describe --always`
 VFDEPS_DIRNAME=vfdeps-$VFDEPS_VERSION
 
+BUILD_DIR=`pwd`
+mkdir upload
+UPLOAD_DIR=$BUILD_DIR/upload
+
 if [ $(uname -s) = "Linux" ]; then
 
     VFDEPS_PARENT_DIR=/tmp
     VFDEPS_PLATFORM=linux
 
     VFDEPS_DIR=$VFDEPS_PARENT_DIR/$VFDEPS_DIRNAME
+
+    make PREFIX=$VFDEPS_DIR
 
 elif [ $(uname -s) = "Darwin" ]; then
 
@@ -26,18 +32,21 @@ elif [ $(uname -s) = "Darwin" ]; then
 
     export PKG_CONFIG_PATH=/usr/local/opt/libffi/lib/pkgconfig
 
+    make PREFIX=$VFDEPS_DIR
+
 else
 
-    echo "Your OS is not supported by this script."
-    exit 1
+    # Assume we're on Windows
+    VFDEPS_PARENT_DIR=C:/
+    VFDEPS_PLATFORM=win
   
+    VFDEPS_DIR=$VFDEPS_PARENT_DIR/$VFDEPS_DIRNAME
+
+    /c/cygwin/bin/bash -lc "cd /cygdrive/$BUILD_DIR/win32 && make PREFIX=$VFDEPS_DIR"
+
 fi
 
 VFDEPS_FILENAME=$VFDEPS_DIRNAME-$VFDEPS_PLATFORM.txz
-BUILD_DIR=`pwd`
-mkdir upload
-UPLOAD_DIR=$BUILD_DIR/upload
-make PREFIX=$VFDEPS_DIR
 VFDEPS_FILEPATH=$UPLOAD_DIR/$VFDEPS_FILENAME
 cd $VFDEPS_PARENT_DIR
 tar cjf $VFDEPS_FILEPATH $VFDEPS_DIRNAME

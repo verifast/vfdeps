@@ -15,7 +15,7 @@ if [ $(uname -s) = "Linux" ]; then
        valac libgtksourceview2.0-dev
 
 elif [ $(uname -s) = "Darwin" ]; then
-  brew update
+  #brew update
 
   if [ $TRAVIS = "true" ]; then
       brew unlink python # See https://github.com/verifast/verifast/issues/127
@@ -34,7 +34,11 @@ elif [ $(uname -s) = "Darwin" ]; then
   brewinstall vala
   
 else
-  echo "Your OS is not supported by this script."
-  exit 1
-  
+
+  # We assume we're on Windows
+  curl -Lf https://cygwin.com/setup-x86.exe
+  ./setup-x86.exe -B -qnNd -R c:/cygwin -l c:/cygwin/var/cache/setup -s http://ftp.inf.tu-dresden.de/software/windows/cygwin32/ -P p7zip -P cygutils-extra -P make -P mingw64-i686-gcc-g++ -P mingw64-i686-gcc-core -P mingw64-i686-gcc -P patch -P rlwrap -P libreadline6 -P diffutils -P mingw64-i686-binutils
+
+  echo "none /cygdrive cygdrive binary,posix=0,user,noacl 0 0" > c:/cygwin/etc/fstab
+
 fi
