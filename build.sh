@@ -36,13 +36,8 @@ elif [ $(uname -s) = "Darwin" ]; then
 
 else
 
-    # Assume we're on Windows
-    VFDEPS_PARENT_DIR=C:/
-    VFDEPS_PLATFORM=win
-  
-    VFDEPS_DIR=$VFDEPS_PARENT_DIR/$VFDEPS_DIRNAME
-
-    /c/cygwin/bin/bash -lc "cd /cygdrive/$BUILD_DIR/win32 && make PREFIX=$VFDEPS_DIR"
+    echo "Your OS is not supported by this script. For Windows, see verifast/vfdeps-win."
+    exit 1
 
 fi
 

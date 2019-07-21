@@ -6,7 +6,6 @@ language: C
 os:
   - linux
   - osx
-  - windows
 
 dist: trusty
 
