@@ -46,20 +46,5 @@ VFDEPS_FILEPATH=$UPLOAD_DIR/$VFDEPS_FILENAME
 cd $VFDEPS_PARENT_DIR
 tar cjf $VFDEPS_FILEPATH $VFDEPS_DIRNAME
 cd $BUILD_DIR
-
-echo '{' > bintray.json
-echo '    "package": {' >> bintray.json
-echo '        "name": "vfdeps",' >> bintray.json
-echo '        "repo": "verifast",' >> bintray.json
-echo '        "subject": "verifast",' >> bintray.json
-echo '        "vcs_url": "https://github.com/verifast/vfdeps",' >> bintray.json
-echo '        "licenses": ["MIT"]' >> bintray.json
-echo '    },' >> bintray.json
-echo '    "version": {' >> bintray.json
-echo '        "name": "'$VFDEPS_VERSION'"' >> bintray.json
-echo '    },' >> bintray.json
-echo '    "files": [{"includePattern": "upload/(.*)", "uploadPattern": "$1"}],' >> bintray.json
-echo '    "publish": true' >> bintray.json
-echo '}' >> bintray.json
-
-cat bintray.json
+ls -l $VFDEPS_FILEPATH
+shasum -a 224 $VFDEPS_FILEPATH
