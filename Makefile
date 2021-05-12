@@ -15,7 +15,7 @@ ocaml-$(OCAML_VERSION): ocaml-$(OCAML_VERSION).tar.gz
 
 $(OCAML_BINARY): | ocaml-$(OCAML_VERSION)
 	cd ocaml-$(OCAML_VERSION) && \
-        ./configure -prefix $(PREFIX) && \
+        ./configure -prefix $(PREFIX) -cc "gcc -Wno-error=implicit-function-declaration" && \
         make world.opt && \
         make install
 
