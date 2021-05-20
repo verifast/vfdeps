@@ -18,7 +18,7 @@ if [ $(uname -s) = "Linux" ]; then
 
     VFDEPS_DIR=$VFDEPS_PARENT_DIR/$VFDEPS_DIRNAME
 
-    make PREFIX=$VFDEPS_DIR
+    make PREFIX=$VFDEPS_DIR JOBS=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
 
 elif [ $(uname -s) = "Darwin" ]; then
 
@@ -32,7 +32,7 @@ elif [ $(uname -s) = "Darwin" ]; then
 
     export PKG_CONFIG_PATH=/usr/local/opt/libffi/lib/pkgconfig
 
-    make PREFIX=$VFDEPS_DIR
+    make PREFIX=$VFDEPS_DIR JOBS=$(sysctl -n hw.ncpu)
 
 else
 

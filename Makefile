@@ -1,6 +1,7 @@
 PATH:=$(PREFIX)/bin:$(PATH)
+JOBS?=1
 
-all: ocaml findlib num ocamlbuild camlp4 lablgtk z3
+all: ocaml findlib num ocamlbuild camlp4 lablgtk z3 dune sexplib0 base res stdio cppo ocplib-endian stdint result capnp capnp-ocaml
 
 # ---- OCaml ----
 
@@ -162,3 +163,221 @@ z3: $(Z3_BINARY)
 
 clean::
 	-rm -Rf $(Z3_DIR)
+
+# ---- dune ----
+DUNE_VERSION=2.0.1
+DUNE_BINARY=$(PREFIX)/bin/dune
+
+dune-$(DUNE_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/ocaml/dune/archive/refs/tags/$(DUNE_VERSION).tar.gz
+
+dune-$(DUNE_VERSION): dune-$(DUNE_VERSION).tar.gz
+	tar xzf $<
+
+$(DUNE_BINARY): | dune-$(DUNE_VERSION)
+	cd $| && ./configure --libdir=$(PREFIX)/lib/ocaml && make release && make install
+
+dune: $(DUNE_BINARY)
+.PHONY: dune
+
+clean::
+	-rm -Rf dune-$(DUNE_VERSION)
+
+DUNE_CONF_BINARY=$(PREFIX)/lib/dune-configurator/configurator.cmxa
+
+$(DUNE_CONF_BINARY): $(DUNE_BINARY) | dune-$(DUNE_VERSION)
+	cd $| && dune build @install && dune install
+
+# ---- sexplib0 ----
+SEXPLIB0_VERSION=0.14.0
+SEXPLIB0_BINARY=$(PREFIX)/lib/ocaml/sexplib0/sexplib0.cmxa
+
+sexplib0-$(SEXPLIB0_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/janestreet/sexplib0/archive/refs/tags/v$(SEXPLIB0_VERSION).tar.gz
+
+sexplib0-$(SEXPLIB0_VERSION): sexplib0-$(SEXPLIB0_VERSION).tar.gz
+	tar xzf $<
+
+$(SEXPLIB0_BINARY): $(DUNE_BINARY) | sexplib0-$(SEXPLIB0_VERSION)
+	cd $| && dune build && dune install
+
+sexplib0: $(SEXPLIB0_BINARY)
+.PHONY: sexplib0
+
+clean::
+	-rm -Rf sexplib0-$(SEXPLIB0_VERSION)
+
+# ---- base ----
+BASE_VERSION=0.13.2
+BASE_BINARY=$(PREFIX)/lib/ocaml/base/base.cmxa
+
+base-$(BASE_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/janestreet/base/archive/refs/tags/v$(BASE_VERSION).tar.gz
+
+base-$(BASE_VERSION): base-$(BASE_VERSION).tar.gz
+	tar xzf $<
+
+$(BASE_BINARY): $(DUNE_BINARY) $(DUNE_CONF_BINARY) $(SEXPLIB0_BINARY) | base-$(BASE_VERSION)
+	cd $| && dune build && dune install
+
+base: sexplib0 $(BASE_BINARY)
+.PHONY: base
+
+clean::
+	-rm -Rf base-$(BASE_VERSION)
+
+# ---- res ----
+RES_VERSION=5.0.1
+RES_BINARY=$(PREFIX)/lib/ocaml/res/res.cmxa
+
+res-$(RES_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/mmottl/res/archive/refs/tags/$(RES_VERSION).tar.gz
+
+res-$(RES_VERSION): res-$(RES_VERSION).tar.gz
+	tar xzf $<
+
+$(RES_BINARY): $(DUNE_BINARY) | res-$(RES_VERSION)
+	cd $| && dune build && dune install
+
+res: $(RES_BINARY)
+.PHONY: res
+
+clean::
+	-rm -Rf res-$(RES_VERSION)
+
+# ---- stdio ----
+STDIO_VERSION=0.13.0
+STDIO_BINARY=$(PREFIX)/lib/ocaml/stdio/stdio.cmxa
+
+stdio-$(STDIO_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/janestreet/stdio/archive/refs/tags/v$(STDIO_VERSION).tar.gz
+
+stdio-$(STDIO_VERSION): stdio-$(STDIO_VERSION).tar.gz
+	tar xzf $<
+
+$(STDIO_BINARY): $(DUNE_BINARY) $(BASE_BINARY) | stdio-$(STDIO_VERSION)
+	cd $| && dune build && dune install
+
+stdio: $(STDIO_BINARY)
+.PHONY: stdio
+
+clean::
+	-rm -Rf stdio-$(STDIO_VERSION)
+
+# ---- cppo ----
+CPPO_VERSION=1.6.7
+CPPO_BINARY=$(PREFIX)/bin/cppo
+
+cppo-$(CPPO_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/ocaml-community/cppo/archive/refs/tags/v$(CPPO_VERSION).tar.gz
+
+cppo-$(CPPO_VERSION): cppo-$(CPPO_VERSION).tar.gz
+	tar xzf $<
+
+$(CPPO_BINARY): $(DUNE_BINARY) | cppo-$(CPPO_VERSION)
+	cd $| && dune build && dune install
+
+cppo: $(CPPO_BINARY)
+.PHONY: cppo
+
+clean::
+	-rm -Rf cppo-$(CPPO_VERSION)
+
+# ---- ocplib-endian ----
+OCPLIB-ENDIAN_VERSION=1.1
+OCPLIB-ENDIAN_BINARY=$(PREFIX)/lib/ocaml/ocplib-endian/ocplib-endian.cmxa
+
+ocplib-endian-$(OCPLIB-ENDIAN_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/OCamlPro/ocplib-endian/archive/$(OCPLIB-ENDIAN_VERSION).tar.gz
+
+ocplib-endian-$(OCPLIB-ENDIAN_VERSION): ocplib-endian-$(OCPLIB-ENDIAN_VERSION).tar.gz
+	tar xzf $<
+
+$(OCPLIB-ENDIAN_BINARY): $(DUNE_BINARY) $(CPPO_BINARY) | ocplib-endian-$(OCPLIB-ENDIAN_VERSION)
+	cd $| && dune build && dune install
+
+ocplib-endian: $(OCPLIB-ENDIAN_BINARY)
+.PHONY: ocplib-endian
+
+clean::
+	-rm -Rf ocplib-endian-$(OCPLIB-ENDIAN_VERSION)
+
+# ---- stdint ----
+STDINT_VERSION=0.7.0
+STDINT_DIR=ocaml-stdint-$(STDINT_VERSION)
+STDINT_BINARY=$(PREFIX)/lib/ocaml/stdint/stdint.cmxa
+
+stdint-$(STDINT_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/andrenth/ocaml-stdint/archive/refs/tags/$(STDINT_VERSION).tar.gz
+
+$(STDINT_DIR): stdint-$(STDINT_VERSION).tar.gz
+	tar xzf $<
+
+$(STDINT_BINARY): $(DUNE_BINARY) | $(STDINT_DIR)
+	cd $| && dune build && dune install
+
+stdint: $(STDINT_BINARY)
+.PHONY: stdint
+
+clean::
+	-rm -Rf stdint-$(STDINT_VERSION)
+
+# ---- result ----
+RESULT_VERSION=1.5
+RESULT_BINARY=$(PREFIX)/lib/ocaml/result/result.cmxa
+
+result-$(RESULT_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/janestreet/result/archive/refs/tags/$(RESULT_VERSION).tar.gz
+
+result-$(RESULT_VERSION): result-$(RESULT_VERSION).tar.gz
+	tar xzf $<
+
+$(RESULT_BINARY): $(DUNE_BINARY) | result-$(RESULT_VERSION)
+	cd $| && dune build && dune install
+
+result: $(RESULT_BINARY)
+.PHONY: result
+
+clean::
+	-rm -Rf result-$(RESULT_VERSION)
+
+# ---- cap'n proto ----
+## capnp tool to produce stubs code based on .capnp schema files, also installs the C++ plugin to create C++ stubs
+CAPNP_VERSION=0.8.0
+CAPNP_DIR=capnproto-c++-$(CAPNP_VERSION)
+CAPNP_BINARY=$(PREFIX)/bin/capnp
+
+capnp-$(CAPNP_VERSION).tar.gz:
+	curl -Lfo $@ https://capnproto.org/capnproto-c++-$(CAPNP_VERSION).tar.gz
+
+$(CAPNP_DIR): capnp-$(CAPNP_VERSION).tar.gz
+	tar xzf $<
+
+$(CAPNP_BINARY): | $(CAPNP_DIR)
+	cd $| && ./configure --prefix=$(PREFIX) && make -j$(JOBS) check && make install
+
+capnp: $(CAPNP_BINARY)
+.PHONY: capnp
+
+clean::
+	-rm -Rf $(CAPNP_DIR)
+
+## capnp plugin for ocaml, which allows to create stubs code with the capnp tool
+CAPNP_OCAML_VERSION=3.4.0
+CAPNP_OCAML_DIR=capnp-ocaml-$(CAPNP_OCAML_VERSION)
+CAPNP_OCAML_BINARY=$(PREFIX)/lib/ocaml/capnp/capnp.cmxa
+
+capnp-$(CAPNP_OCAML_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/capnproto/capnp-ocaml/archive/refs/tags/v$(CAPNP_OCAML_VERSION).tar.gz
+
+$(CAPNP_OCAML_DIR): capnp-$(CAPNP_OCAML_VERSION).tar.gz
+	tar xzf $<
+
+$(CAPNP_OCAML_BINARY): $(DUNE_BINARY) $(BASE_BINARY) $(STDIO_BINARY) $(RES_BINARY) $(OCPLIB-ENDIAN_BINARY) $(RESULT_BINARY) $(STDINT_BINARY) | $(CAPNP_OCAML_DIR)
+	cd $| && dune build && dune install
+
+capnp-ocaml: $(CAPNP_BINARY) $(CAPNP_OCAML_BINARY)
+.PHONY: capnp-ocaml
+
+clean::
+	-rm -Rf $(CAPNP_OCAML_DIR)
