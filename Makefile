@@ -1,11 +1,11 @@
 PATH:=$(PREFIX)/bin:$(PATH)
 JOBS?=1
 
-all: ocaml findlib num ocamlbuild camlp4 lablgtk z3 dune sexplib0 base res stdio cppo ocplib-endian stdint result capnp capnp-ocaml
+all: ocaml findlib num ocamlbuild camlp4 lablgtk z3 csexp dune sexplib0 base res stdio cppo ocplib-endian stdint result capnp capnp-ocaml
 
 # ---- OCaml ----
 
-OCAML_VERSION=4.06.0
+OCAML_VERSION=4.13.0
 OCAML_BINARY=$(PREFIX)/bin/ocamlopt.opt
 
 ocaml-$(OCAML_VERSION).tar.gz:
@@ -16,7 +16,7 @@ ocaml-$(OCAML_VERSION): ocaml-$(OCAML_VERSION).tar.gz
 
 $(OCAML_BINARY): | ocaml-$(OCAML_VERSION)
 	cd ocaml-$(OCAML_VERSION) && \
-        ./configure -prefix $(PREFIX) -cc "gcc -Wno-error=implicit-function-declaration" && \
+        ./configure -prefix $(PREFIX) && \
         make world.opt && \
         make install
 
@@ -28,7 +28,7 @@ clean::
 
 # ---- Findlib ----
 
-FINDLIB_VERSION=1.7.3
+FINDLIB_VERSION=1.9.1
 FINDLIB_BINARY=$(PREFIX)/bin/ocamlfind
 
 findlib-$(FINDLIB_VERSION).tar.gz:
@@ -59,7 +59,7 @@ clean::
 
 # ---- Num ----
 
-NUM_VERSION=1.1
+NUM_VERSION=1.4
 NUM_BINARY=$(PREFIX)/lib/ocaml/nums.cmxa
 
 num-$(NUM_VERSION).tar.gz:
@@ -79,7 +79,7 @@ clean::
 
 # ---- ocamlbuild ----
 
-OCAMLBUILD_VERSION=0.12.0
+OCAMLBUILD_VERSION=0.14.0
 OCAMLBUILD_BINARY=$(PREFIX)/bin/ocamlbuild
 
 ocamlbuild-$(OCAMLBUILD_VERSION).tar.gz:
@@ -100,7 +100,7 @@ clean::
 
 # ---- camlp4 ----
 
-CAMLP4_VERSION:=4.06+1
+CAMLP4_VERSION:=4.13+1
 CAMLP4_DIR:=camlp4-$(subst +,-,$(CAMLP4_VERSION))
 CAMLP4_BINARY:=$(PREFIX)/bin/camlp4o
 
@@ -122,8 +122,8 @@ clean::
 
 # ---- lablgtk ----
 
-LABLGTK_VERSION=lablgtk2186
-LABLGTK_BINARY=$(PREFIX)/lib/ocaml/lablgtk2/lablgtk2.cmxa
+LABLGTK_VERSION=2.18.11
+LABLGTK_BINARY=$(PREFIX)/lib/ocaml/lablgtk2/lablgtk.cmxa
 
 lablgtk-$(LABLGTK_VERSION).tar.gz:
 	curl -Lfo lablgtk-$(LABLGTK_VERSION).tar.gz https://github.com/garrigue/lablgtk/archive/refs/tags/$(LABLGTK_VERSION).tar.gz
@@ -165,7 +165,7 @@ clean::
 	-rm -Rf $(Z3_DIR)
 
 # ---- dune ----
-DUNE_VERSION=2.0.1
+DUNE_VERSION=2.9.1
 DUNE_BINARY=$(PREFIX)/bin/dune
 
 dune-$(DUNE_VERSION).tar.gz:
@@ -185,8 +185,24 @@ clean::
 
 DUNE_CONF_BINARY=$(PREFIX)/lib/dune-configurator/configurator.cmxa
 
-$(DUNE_CONF_BINARY): $(DUNE_BINARY) | dune-$(DUNE_VERSION)
+$(DUNE_CONF_BINARY): $(DUNE_BINARY) $(RESULT_BINARY) $(CSEXP_BINARY) | dune-$(DUNE_VERSION)
 	cd $| && dune build @install && dune install
+
+# ---- csexp ----
+CSEXP_VERSION=1.5.1
+CSEXP_BINARY=$(PREFIX)/lib/ocaml/csexp/csexp.cmxa
+
+csexp-$(CSEXP_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/ocaml-dune/csexp/archive/refs/tags/$(CSEXP_VERSION).tar.gz
+
+csexp-$(CSEXP_VERSION): csexp-$(CSEXP_VERSION).tar.gz
+	tar xzf $<
+
+$(CSEXP_BINARY): $(DUNE_BINARY) | csexp-$(CSEXP_VERSION)
+	cd $| && dune build && dune install
+
+csexp: $(CSEXP_BINARY)
+.PHONY: csexp
 
 # ---- sexplib0 ----
 SEXPLIB0_VERSION=0.14.0
@@ -198,7 +214,7 @@ sexplib0-$(SEXPLIB0_VERSION).tar.gz:
 sexplib0-$(SEXPLIB0_VERSION): sexplib0-$(SEXPLIB0_VERSION).tar.gz
 	tar xzf $<
 
-$(SEXPLIB0_BINARY): $(DUNE_BINARY) | sexplib0-$(SEXPLIB0_VERSION)
+$(SEXPLIB0_BINARY): $(DUNE_BINARY) $(DUNE_CONF_BINARY) | sexplib0-$(SEXPLIB0_VERSION)
 	cd $| && dune build && dune install
 
 sexplib0: $(SEXPLIB0_BINARY)
@@ -208,7 +224,7 @@ clean::
 	-rm -Rf sexplib0-$(SEXPLIB0_VERSION)
 
 # ---- base ----
-BASE_VERSION=0.13.2
+BASE_VERSION=0.14.1
 BASE_BINARY=$(PREFIX)/lib/ocaml/base/base.cmxa
 
 base-$(BASE_VERSION).tar.gz:
@@ -217,7 +233,7 @@ base-$(BASE_VERSION).tar.gz:
 base-$(BASE_VERSION): base-$(BASE_VERSION).tar.gz
 	tar xzf $<
 
-$(BASE_BINARY): $(DUNE_BINARY) $(DUNE_CONF_BINARY) $(SEXPLIB0_BINARY) | base-$(BASE_VERSION)
+$(BASE_BINARY): $(DUNE_BINARY) $(SEXPLIB0_BINARY) | base-$(BASE_VERSION)
 	cd $| && dune build && dune install
 
 base: sexplib0 $(BASE_BINARY)
@@ -246,7 +262,7 @@ clean::
 	-rm -Rf res-$(RES_VERSION)
 
 # ---- stdio ----
-STDIO_VERSION=0.13.0
+STDIO_VERSION=0.14.0
 STDIO_BINARY=$(PREFIX)/lib/ocaml/stdio/stdio.cmxa
 
 stdio-$(STDIO_VERSION).tar.gz:
@@ -265,7 +281,7 @@ clean::
 	-rm -Rf stdio-$(STDIO_VERSION)
 
 # ---- cppo ----
-CPPO_VERSION=1.6.7
+CPPO_VERSION=1.6.8
 CPPO_BINARY=$(PREFIX)/bin/cppo
 
 cppo-$(CPPO_VERSION).tar.gz:
@@ -343,7 +359,7 @@ clean::
 
 # ---- cap'n proto ----
 ## capnp tool to produce stubs code based on .capnp schema files, also installs the C++ plugin to create C++ stubs
-CAPNP_VERSION=0.8.0
+CAPNP_VERSION=0.9.1
 CAPNP_DIR=capnproto-c++-$(CAPNP_VERSION)
 CAPNP_BINARY=$(PREFIX)/bin/capnp
 
