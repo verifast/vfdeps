@@ -233,7 +233,7 @@ base-$(BASE_VERSION).tar.gz:
 base-$(BASE_VERSION): base-$(BASE_VERSION).tar.gz
 	tar xzf $<
 
-$(BASE_BINARY): $(DUNE_BINARY) $(SEXPLIB0_BINARY) | base-$(BASE_VERSION)
+$(BASE_BINARY): $(DUNE_BINARY) $(DUNE_CONF_BINARY) $(SEXPLIB0_BINARY) | base-$(BASE_VERSION)
 	cd $| && dune build && dune install
 
 base: sexplib0 $(BASE_BINARY)
