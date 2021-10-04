@@ -1,7 +1,7 @@
 PATH:=$(PREFIX)/bin:$(PATH)
 JOBS?=1
 
-all: ocaml findlib num ocamlbuild camlp4 lablgtk z3 csexp dune sexplib0 base res stdio cppo ocplib-endian stdint result capnp capnp-ocaml
+all: ocaml findlib num ocamlbuild camlp4 lablgtk z3 dune csexp sexplib0 base res stdio cppo ocplib-endian stdint result capnp capnp-ocaml
 
 # ---- OCaml ----
 
@@ -167,6 +167,7 @@ clean::
 # ---- dune ----
 DUNE_VERSION=2.9.1
 DUNE_BINARY=$(PREFIX)/bin/dune
+DUNE_CONF_BINARY=$(PREFIX)/lib/ocaml/dune-configurator/configurator.cmxa
 
 dune-$(DUNE_VERSION).tar.gz:
 	curl -Lfo $@ https://github.com/ocaml/dune/archive/refs/tags/$(DUNE_VERSION).tar.gz
@@ -177,16 +178,14 @@ dune-$(DUNE_VERSION): dune-$(DUNE_VERSION).tar.gz
 $(DUNE_BINARY): | dune-$(DUNE_VERSION)
 	cd $| && ./configure --libdir=$(PREFIX)/lib/ocaml && make release && make install
 
+$(DUNE_CONF_BINARY): $(DUNE_BINARY) $(SEXPLIB0_BINARY) | dune-$(DUNE_VERSION)
+	cd $| && ./dune.exe build @install && ./dune.exe install
+
 dune: $(DUNE_BINARY)
 .PHONY: dune
 
 clean::
 	-rm -Rf dune-$(DUNE_VERSION)
-
-DUNE_CONF_BINARY=$(PREFIX)/lib/dune-configurator/configurator.cmxa
-
-$(DUNE_CONF_BINARY): $(DUNE_BINARY) $(RESULT_BINARY) $(CSEXP_BINARY) | dune-$(DUNE_VERSION)
-	cd $| && dune build @install && dune install
 
 # ---- csexp ----
 CSEXP_VERSION=1.5.1
@@ -233,10 +232,10 @@ base-$(BASE_VERSION).tar.gz:
 base-$(BASE_VERSION): base-$(BASE_VERSION).tar.gz
 	tar xzf $<
 
-$(BASE_BINARY): $(DUNE_BINARY) $(DUNE_CONF_BINARY) $(SEXPLIB0_BINARY) | base-$(BASE_VERSION)
+$(BASE_BINARY): $(DUNE_BINARY) $(SEXPLIB0_BINARY) | base-$(BASE_VERSION)
 	cd $| && dune build && dune install
 
-base: sexplib0 $(BASE_BINARY)
+base: $(SEXPLIB0_BINARY) $(BASE_BINARY)
 .PHONY: base
 
 clean::
