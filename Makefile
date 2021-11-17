@@ -122,7 +122,7 @@ clean::
 
 # ---- lablgtk ----
 
-LABLGTK_VERSION=2.18.11+btj1
+LABLGTK_VERSION=2.18.11-btj1
 LABLGTK_BINARY=$(PREFIX)/lib/ocaml/lablgtk2/lablgtk.cmxa
 
 lablgtk-$(LABLGTK_VERSION).tar.gz:
