@@ -122,11 +122,11 @@ clean::
 
 # ---- lablgtk ----
 
-LABLGTK_VERSION=2.18.11
+LABLGTK_VERSION=2.18.11+btj1
 LABLGTK_BINARY=$(PREFIX)/lib/ocaml/lablgtk2/lablgtk.cmxa
 
 lablgtk-$(LABLGTK_VERSION).tar.gz:
-	curl -Lfo lablgtk-$(LABLGTK_VERSION).tar.gz https://github.com/garrigue/lablgtk/archive/refs/tags/$(LABLGTK_VERSION).tar.gz
+	curl -Lfo lablgtk-$(LABLGTK_VERSION).tar.gz https://github.com/btj/lablgtk/archive/refs/tags/$(LABLGTK_VERSION).tar.gz
 
 lablgtk-$(LABLGTK_VERSION): lablgtk-$(LABLGTK_VERSION).tar.gz
 	tar xzf lablgtk-$(LABLGTK_VERSION).tar.gz
