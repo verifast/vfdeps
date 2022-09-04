@@ -470,4 +470,5 @@ ppx_parser: $(PPX_PARSER_BINARY)
 .PHONY: ppx_parser
 
 clean::
-	-rm -Rd ppx_parser-$(PPX_PARSER_VERSION)
+	-rm -Rf ppx_parser-$(PPX_PARSER_VERSION)
+	
