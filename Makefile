@@ -394,7 +394,7 @@ $(CAPNP_DIR): capnp-$(CAPNP_VERSION).tar.gz
 	tar xzf $<
 
 $(CAPNP_BINARY): | $(CAPNP_DIR)
-	cd $| && cmake -G Ninja -S . -B build -DWITH_OPENSSL=OFF -DCMAKE_INSTALL_PREFIX=$(PREFIX) -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++ -static" -DBUILD_TESTING=OFF && cmake --build build --target install
+	cd $| && cmake -G Ninja -S . -B build -DWITH_OPENSSL=OFF -DCMAKE_INSTALL_PREFIX=$(PREFIX) -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF && cmake --build build --target install
 
 capnp: $(CAPNP_BINARY)
 .PHONY: capnp
