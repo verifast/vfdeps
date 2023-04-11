@@ -1,11 +1,10 @@
 PATH:=$(PREFIX)/bin:$(PATH)
-JOBS?=1
 
-all: ocaml findlib num ocamlbuild lablgtk z3 dune csexp res stdio base sexplib0 ocplib-endian cppo stdint result capnp capnp-ocaml stdlib-shims ocaml-compiler-libs ppx_derivers ppxlib ppx_parser
+all: ocaml findlib num ocamlbuild camlp-streams camlp4 lablgtk z3 csexp dune sexplib0 base res stdio cppo ocplib-endian stdint result capnp capnp-ocaml stdlib-shims ocaml-compiler-libs ppx_derivers ppxlib ppx_parser
 
 # ---- OCaml ----
 
-OCAML_VERSION=4.13.0
+OCAML_VERSION=4.14.0
 OCAML_BINARY=$(PREFIX)/bin/ocamlopt.opt
 
 ocaml-$(OCAML_VERSION).tar.gz:
@@ -17,7 +16,7 @@ ocaml-$(OCAML_VERSION): ocaml-$(OCAML_VERSION).tar.gz
 $(OCAML_BINARY): | ocaml-$(OCAML_VERSION)
 	cd ocaml-$(OCAML_VERSION) && \
         ./configure -prefix $(PREFIX) && \
-        make world.opt && \
+        make && \
         make install
 
 ocaml: $(OCAML_BINARY)
@@ -28,7 +27,7 @@ clean::
 
 # ---- Findlib ----
 
-FINDLIB_VERSION=1.9.1
+FINDLIB_VERSION=1.9.5
 FINDLIB_BINARY=$(PREFIX)/bin/ocamlfind
 
 findlib-$(FINDLIB_VERSION).tar.gz:
@@ -79,7 +78,7 @@ clean::
 
 # ---- ocamlbuild ----
 
-OCAMLBUILD_VERSION=0.14.0
+OCAMLBUILD_VERSION=0.14.2
 OCAMLBUILD_BINARY=$(PREFIX)/bin/ocamlbuild
 
 ocamlbuild-$(OCAMLBUILD_VERSION).tar.gz:
@@ -98,13 +97,75 @@ ocamlbuild: $(OCAMLBUILD_BINARY)
 clean::
 	-rm -Rf ocamlbuild-$(OCAMLBUILD_VERSION)
 
+# ---- dune ----
+DUNE_VERSION=3.7.1
+DUNE_BINARY=$(PREFIX)/bin/dune
+
+dune-$(DUNE_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/ocaml/dune/archive/refs/tags/$(DUNE_VERSION).tar.gz
+
+dune-$(DUNE_VERSION): dune-$(DUNE_VERSION).tar.gz
+	tar xzf $<
+
+$(DUNE_BINARY): $(OCAML_BINARY) $(FINDLIB_BINARY) | dune-$(DUNE_VERSION)
+	cd $| && ./configure --libdir=$(PREFIX)/lib/ocaml && make release && make install
+
+dune: $(DUNE_BINARY)
+.PHONY: dune
+
+clean::
+	-rm -Rf dune-$(DUNE_VERSION)
+
+DUNE_INSTALL=dune build @install --profile release && dune install --profile release --prefix=$(PREFIX) --libdir=$(PREFIX)/lib/ocaml
+
+# ---- camlp-streams ----
+CAMLP_STREAMS_VERSION=5.0.1
+CAMLP_STREAMS_BINARY=$(PREFIX)/lib/ocaml/camlp-stream/camlp-streams.cmxa
+
+camlp-streams-$(CAMLP_STREAMS_VERSION).tar.gz:
+	curl -Lfo $@ https://github.com/ocaml/camlp-streams/archive/refs/tags/v$(CAMLP_STREAMS_VERSION).tar.gz
+
+camlp-streams-$(CAMLP_STREAMS_VERSION): camlp-streams-$(CAMLP_STREAMS_VERSION).tar.gz
+	tar xzf $<
+
+$(CAMLP_STREAMS_BINARY): $(DUNE_BINARY) | camlp-streams-$(CAMLP_STREAMS_VERSION)
+	cd $| && $(DUNE_INSTALL)
+
+camlp-streams: $(CAMLP_STREAMS_BINARY)
+.PHONY: camlp-streams
+
+clean::
+	-rm -Rf camlp-streams-$(CAMLP_STREAMS_VERSION)
+
+# ---- camlp4 ----
+
+CAMLP4_VERSION:=4.14+1
+CAMLP4_DIR:=camlp4-$(subst +,-,$(CAMLP4_VERSION))
+CAMLP4_BINARY:=$(PREFIX)/bin/camlp4o
+
+$(CAMLP4_DIR).tar.gz:
+	curl -Lfo $(CAMLP4_DIR).tar.gz https://github.com/ocaml/camlp4/archive/$(CAMLP4_VERSION).tar.gz
+
+$(CAMLP4_DIR): $(CAMLP4_DIR).tar.gz
+	tar xzf $(CAMLP4_DIR).tar.gz
+
+$(CAMLP4_BINARY): $(OCAMLBUILD_BINARY) $(CAMLP_STREAMS_BINARY) $(CAMLP_STREAMS_BINARY) | $(CAMLP4_DIR)
+	cd $(CAMLP4_DIR) && \
+        ./configure && make all && make install
+
+camlp4: $(CAMLP4_BINARY)
+.PHONY: camlp4
+
+clean::
+	-rm -Rf $(CAMLP4_DIR)
+
 # ---- lablgtk ----
 
-LABLGTK_VERSION=2.18.11-btj1
+LABLGTK_VERSION=2.18.13
 LABLGTK_BINARY=$(PREFIX)/lib/ocaml/lablgtk2/lablgtk.cmxa
 
 lablgtk-$(LABLGTK_VERSION).tar.gz:
-	curl -Lfo lablgtk-$(LABLGTK_VERSION).tar.gz https://github.com/btj/lablgtk/archive/refs/tags/$(LABLGTK_VERSION).tar.gz
+	curl -Lfo lablgtk-$(LABLGTK_VERSION).tar.gz https://github.com/garrigue/lablgtk/archive/refs/tags/$(LABLGTK_VERSION).tar.gz
 
 lablgtk-$(LABLGTK_VERSION): lablgtk-$(LABLGTK_VERSION).tar.gz
 	tar xzf lablgtk-$(LABLGTK_VERSION).tar.gz
@@ -131,9 +192,9 @@ z3-$(Z3_VERSION).tar.gz:
 $(Z3_DIR): z3-$(Z3_VERSION).tar.gz
 	tar xzf z3-$(Z3_VERSION).tar.gz
 
-$(Z3_BINARY): $(FINDLIB_BINARY) | $(Z3_DIR)
+$(Z3_BINARY): $(FINDLIB_BINARY) $(NUM_BINARY) | $(Z3_DIR)
 	cd $(Z3_DIR) && \
-        python scripts/mk_make.py --ml --prefix=$(PREFIX) && \
+        python3 scripts/mk_make.py --ml --prefix=$(PREFIX) && \
         cd build && make && make install
 
 z3: $(Z3_BINARY)
@@ -141,27 +202,6 @@ z3: $(Z3_BINARY)
 
 clean::
 	-rm -Rf $(Z3_DIR)
-
-# ---- dune ----
-DUNE_VERSION=2.9.1
-DUNE_BINARY=$(PREFIX)/bin/dune
-
-dune-$(DUNE_VERSION).tar.gz:
-	curl -Lfo $@ https://github.com/ocaml/dune/archive/refs/tags/$(DUNE_VERSION).tar.gz
-
-dune-$(DUNE_VERSION): dune-$(DUNE_VERSION).tar.gz
-	tar xzf $<
-
-$(DUNE_BINARY): | dune-$(DUNE_VERSION)
-	cd $| && ./configure --libdir=$(PREFIX)/lib/ocaml && make release && make install
-
-dune: $(DUNE_BINARY)
-.PHONY: dune
-
-clean::
-	-rm -Rf dune-$(DUNE_VERSION)
-
-DUNE_INSTALL=dune build @install --profile release && dune install --profile release
 
 # ---- csexp ----
 CSEXP_VERSION=1.5.1
@@ -179,12 +219,17 @@ $(CSEXP_BINARY): $(DUNE_BINARY) | csexp-$(CSEXP_VERSION)
 csexp: $(CSEXP_BINARY)
 .PHONY: csexp
 
-# ---- sexplib0 ----
-DUNE_CONF_BINARY=$(PREFIX)/lib/ocaml/dune-configurator/configurator.cmxa
-$(DUNE_CONF_BINARY): $(DUNE_BINARY) $(CSEXP_BINARY) | dune-$(DUNE_VERSION)
-	cd $| && ./dune.exe build dune-configurator.install && ./dune.exe install dune-configurator
+# ---- other dune libraries ----
+STDUNE_BINARY=$(PREFIX)/lib/ocaml/stdune/stdune.cmxa
+$(STDUNE_BINARY): $(DUNE_BINARY) $(CSEXP_BINARY) | dune-$(DUNE_VERSION)
+	cd $| && dune build stdune.install && dune install stdune --prefix=$(PREFIX) --libdir=$(PREFIX)/lib/ocaml
 
-SEXPLIB0_VERSION=0.14.0
+DUNE_CONF_BINARY=$(PREFIX)/lib/ocaml/dune-configurator/configurator.cmxa
+$(DUNE_CONF_BINARY): $(DUNE_BINARY) $(STDUNE_BINARY) | dune-$(DUNE_VERSION)
+	cd $| && dune build dune-configurator.install && dune install dune-configurator --prefix=$(PREFIX) --libdir=$(PREFIX)/lib/ocaml
+
+# ---- sexplib0 ----
+SEXPLIB0_VERSION=0.15.1
 SEXPLIB0_BINARY=$(PREFIX)/lib/ocaml/sexplib0/sexplib0.cmxa
 
 sexplib0-$(SEXPLIB0_VERSION).tar.gz:
@@ -203,7 +248,7 @@ clean::
 	-rm -Rf sexplib0-$(SEXPLIB0_VERSION)
 
 # ---- base ----
-BASE_VERSION=0.14.1
+BASE_VERSION=0.15.1
 BASE_BINARY=$(PREFIX)/lib/ocaml/base/base.cmxa
 
 base-$(BASE_VERSION).tar.gz:
@@ -212,7 +257,7 @@ base-$(BASE_VERSION).tar.gz:
 base-$(BASE_VERSION): base-$(BASE_VERSION).tar.gz
 	tar xzf $<
 
-$(BASE_BINARY): $(DUNE_BINARY) $(DUNE_CONF_BINARY) $(SEXPLIB0_BINARY) | base-$(BASE_VERSION)
+$(BASE_BINARY): $(DUNE_BINARY) $(DUNE_CONF_BINARY) $(STDUNE_BINARY) $(SEXPLIB0_BINARY) | base-$(BASE_VERSION)
 	cd $| && $(DUNE_INSTALL)
 
 base: $(SEXPLIB0_BINARY) $(BASE_BINARY)
@@ -241,7 +286,7 @@ clean::
 	-rm -Rf res-$(RES_VERSION)
 
 # ---- stdio ----
-STDIO_VERSION=0.14.0
+STDIO_VERSION=0.15.0
 STDIO_BINARY=$(PREFIX)/lib/ocaml/stdio/stdio.cmxa
 
 stdio-$(STDIO_VERSION).tar.gz:
@@ -260,7 +305,7 @@ clean::
 	-rm -Rf stdio-$(STDIO_VERSION)
 
 # ---- cppo ----
-CPPO_VERSION=1.6.8
+CPPO_VERSION=1.6.9
 CPPO_BINARY=$(PREFIX)/bin/cppo
 
 cppo-$(CPPO_VERSION).tar.gz:
@@ -269,7 +314,7 @@ cppo-$(CPPO_VERSION).tar.gz:
 cppo-$(CPPO_VERSION): cppo-$(CPPO_VERSION).tar.gz
 	tar xzf $<
 
-$(CPPO_BINARY): $(DUNE_BINARY) | cppo-$(CPPO_VERSION)
+$(CPPO_BINARY): $(DUNE_BINARY) $(OCAMLBUILD_BINARY) | cppo-$(CPPO_VERSION)
 	cd $| && $(DUNE_INSTALL)
 
 cppo: $(CPPO_BINARY)
@@ -279,7 +324,7 @@ clean::
 	-rm -Rf cppo-$(CPPO_VERSION)
 
 # ---- ocplib-endian ----
-OCPLIB-ENDIAN_VERSION=1.1
+OCPLIB-ENDIAN_VERSION=1.2
 OCPLIB-ENDIAN_BINARY=$(PREFIX)/lib/ocaml/ocplib-endian/ocplib_endian.cmxa
 
 ocplib-endian-$(OCPLIB-ENDIAN_VERSION).tar.gz:
@@ -298,7 +343,7 @@ clean::
 	-rm -Rf ocplib-endian-$(OCPLIB-ENDIAN_VERSION)
 
 # ---- stdint ----
-STDINT_VERSION=0.7.0
+STDINT_VERSION=0.7.2
 STDINT_DIR=ocaml-stdint-$(STDINT_VERSION)
 STDINT_BINARY=$(PREFIX)/lib/ocaml/stdint/stdint.cmxa
 
@@ -338,7 +383,7 @@ clean::
 
 # ---- cap'n proto ----
 ## capnp tool to produce stubs code based on .capnp schema files, also installs the C++ plugin to create C++ stubs
-CAPNP_VERSION=0.9.1
+CAPNP_VERSION=0.10.3
 CAPNP_DIR=capnproto-c++-$(CAPNP_VERSION)
 CAPNP_BINARY=$(PREFIX)/bin/capnp
 
@@ -349,7 +394,7 @@ $(CAPNP_DIR): capnp-$(CAPNP_VERSION).tar.gz
 	tar xzf $<
 
 $(CAPNP_BINARY): | $(CAPNP_DIR)
-	cd $| && ./configure --prefix=$(PREFIX) && make -j$(JOBS) check && make install
+	cd $| && cmake -G Ninja -S . -B build -DWITH_OPENSSL=OFF -DCMAKE_INSTALL_PREFIX=$(PREFIX) -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++ -static" -DBUILD_TESTING=OFF && cmake --build build --target install
 
 capnp: $(CAPNP_BINARY)
 .PHONY: capnp
@@ -358,7 +403,7 @@ clean::
 	-rm -Rf $(CAPNP_DIR)
 
 ## capnp plugin for ocaml, which allows to create stubs code with the capnp tool
-CAPNP_OCAML_VERSION=3.4.0
+CAPNP_OCAML_VERSION=3.5.0
 CAPNP_OCAML_DIR=capnp-ocaml-$(CAPNP_OCAML_VERSION)
 CAPNP_OCAML_BINARY=$(PREFIX)/lib/ocaml/capnp/capnp.cmxa
 
@@ -394,7 +439,7 @@ ocaml-compiler-libs: $(OCAML_COMPILER_LIBS_BINARY)
 .PHONY: ocaml-compiler-libs
 
 clean::
-	-rm -Rd $(OCAML_COMPILER_LIBS_VERSION)
+	-rm -Rd ocaml-compiler-libs-$(OCAML_COMPILER_LIBS_VERSION)
 
 # ---- stdlib-shims ----
 STDLIB-SHIMS_VERSION=0.3.0
@@ -435,7 +480,7 @@ clean::
 	-rm -Rf ppx_derivers-$(PPX_DERIVERS_VERSION)
 
 # ---- ppxlib ----
-PPXLIB_VERSION=0.27.0
+PPXLIB_VERSION=0.28.0
 PPXLIB_BINARY=$(PREFIX)/lib/ocaml/ppxlib/ppxlib.cmxa
 
 ppxlib-$(PPXLIB_VERSION).tar.gz:
@@ -463,7 +508,7 @@ ppx_parser-$(PPX_PARSER_VERSION).tar.gz:
 ppx_parser-$(PPX_PARSER_VERSION): ppx_parser-$(PPX_PARSER_VERSION).tar.gz
 	tar xzf $<
 
-$(PPX_PARSER_BINARY): $(DUNE_BINARY) $(PPXLIB_BINARY) | ppx_parser-$(PPX_PARSER_VERSION)
+$(PPX_PARSER_BINARY): $(DUNE_BINARY) $(PPXLIB_BINARY) $(CAMLP_STREAMS_BINARY) | ppx_parser-$(PPX_PARSER_VERSION)
 	cd $| && $(DUNE_INSTALL)
 
 ppx_parser: $(PPX_PARSER_BINARY)

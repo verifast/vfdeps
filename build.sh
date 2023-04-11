@@ -8,7 +8,7 @@ VFDEPS_VERSION=`git describe --always`
 VFDEPS_DIRNAME=vfdeps-$VFDEPS_VERSION
 
 BUILD_DIR=`pwd`
-mkdir upload
+mkdir -p upload
 UPLOAD_DIR=$BUILD_DIR/upload
 
 if [ $(uname -s) = "Linux" ]; then
@@ -18,7 +18,7 @@ if [ $(uname -s) = "Linux" ]; then
 
     VFDEPS_DIR=$VFDEPS_PARENT_DIR/$VFDEPS_DIRNAME
 
-    make PREFIX=$VFDEPS_DIR JOBS=$(cat /proc/cpuinfo | grep 'processor' | wc -l)
+    make PREFIX=$VFDEPS_DIR
 
 elif [ $(uname -s) = "Darwin" ]; then
 
@@ -32,7 +32,7 @@ elif [ $(uname -s) = "Darwin" ]; then
 
     export PKG_CONFIG_PATH=/usr/local/opt/libffi/lib/pkgconfig
 
-    make PREFIX=$VFDEPS_DIR JOBS=$(sysctl -n hw.ncpu)
+    make PREFIX=$VFDEPS_DIR
 
 else
 
