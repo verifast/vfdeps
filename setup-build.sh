@@ -12,7 +12,8 @@ if [ $(uname -s) = "Linux" ]; then
   sudo apt-get install -y --no-install-recommends \
        git wget ca-certificates make m4 \
        gcc patch unzip libgtk2.0-dev \
-       valac libgtksourceview2.0-dev
+       valac libgtksourceview2.0-dev \
+       ninja-build
 
 elif [ $(uname -s) = "Darwin" ]; then
   #brew update
@@ -32,6 +33,7 @@ elif [ $(uname -s) = "Darwin" ]; then
   brewinstall gtk+
   brewinstall gtksourceview
   brewinstall vala
+  brewinstall ninja
   
 else
 
