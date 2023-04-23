@@ -43,6 +43,7 @@ jobs:
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.5.0
     with:
       base64-subjects: "${{ needs.build_ubuntu.outputs.hashes }}"
+      upload-assets: false
 
   build_macos:
     runs-on: macos-11
