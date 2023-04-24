@@ -19,7 +19,7 @@ jobs:
       - name: Build
         run: ./build.sh
         
-      - name: Upload Package
+      - name: Upload package
         uses: actions/upload-artifact@v2.2.3
         with:
           name: binary_package
@@ -36,6 +36,33 @@ jobs:
         with:
           name: downloads-Ubuntu
           path: downloads
+
+      - name: Generate artifact hashes
+        shell: bash
+        id: hash
+        run: |
+          cd upload && echo "artifact_hashes=$(sha256sum * | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+    outputs:
+      artifact_hashes: ${{ steps.hash.outputs.artifact_hashes }}
+
+  # Sign in a separate job to limit ID token exposure
+  sign_ubuntu:
+    needs: [build_ubuntu]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      
+    steps:
+      - name: Install cosign
+        #if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3.0.2
+
+      - name: Sign artifact hashes
+        #if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          echo ${{ needs.build_ubuntu.outputs.artifact_hashes }} | base64 -d > ARTIFACT_SHA256SUMS
+          cosign sign-blob -y ARTIFACT_SHA256SUMS
 
   build_macos:
     runs-on: macos-11
@@ -66,3 +93,30 @@ jobs:
         with:
           name: downloads-MacOS
           path: downloads
+        
+      - name: Generate artifact hashes
+        shell: bash
+        id: hash
+        run: |
+          cd upload && echo "artifact_hashes=$(shasum -a 256 * | base64)" >> "$GITHUB_OUTPUT"
+
+    outputs:
+      artifact_hashes: ${{ steps.hash.outputs.artifact_hashes }}
+
+  # Sign in a separate job to limit ID token exposure
+  sign_macos:
+    needs: [build_macos]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      
+    steps:
+      - name: Install cosign
+        #if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3.0.2
+
+      - name: Sign artifact hashes
+        #if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          echo ${{ needs.build_macos.outputs.artifact_hashes }} | base64 -d > ARTIFACT_SHA256SUMS
+          cosign sign-blob -y ARTIFACT_SHA256SUMS
