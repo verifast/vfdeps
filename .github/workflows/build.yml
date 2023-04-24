@@ -25,11 +25,17 @@ jobs:
           name: binary_package
           path: upload/*
 
-      - name: Upload DOWNLOADS
+      - name: Upload DOWNLOADS.txt
         uses: actions/upload-artifact@v2.2.3
         with:
-          name: DOWNLOADS-Ubuntu
-          path: DOWNLOADS
+          name: downloads-info-Ubuntu
+          path: DOWNLOADS.txt
+
+      - name: Upload downloads
+        uses: actions/upload-artifact@v2.2.3
+        with:
+          name: downloads-Ubuntu
+          path: downloads
 
   build_macos:
     runs-on: macos-11
@@ -49,8 +55,14 @@ jobs:
           name: binary_package
           path: upload/*
 
-      - name: Upload DOWNLOADS
+      - name: Upload DOWNLOADS.txt
         uses: actions/upload-artifact@v2.2.3
         with:
-          name: DOWNLOADS-MacOS
-          path: DOWNLOADS
+          name: downloads-info-MacOS
+          path: DOWNLOADS.txt
+
+      - name: Upload downloads
+        uses: actions/upload-artifact@v2.2.3
+        with:
+          name: downloads-MacOS
+          path: downloads
