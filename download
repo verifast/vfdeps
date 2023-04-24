@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e
+
+curl -Lfo $1 $2
+echo "$(shasum -a 256 $1) $2" >> DOWNLOADS
