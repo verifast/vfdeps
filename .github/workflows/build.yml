@@ -25,6 +25,18 @@ jobs:
           name: binary_package
           path: upload/*
 
+      - name: Upload DOWNLOADS.txt
+        uses: actions/upload-artifact@v2.2.3
+        with:
+          name: downloads-info-Ubuntu
+          path: DOWNLOADS.txt
+
+      - name: Upload downloads
+        uses: actions/upload-artifact@v2.2.3
+        with:
+          name: downloads-Ubuntu
+          path: downloads
+
       - name: Generate artifact hashes
         shell: bash
         id: hash
@@ -69,6 +81,18 @@ jobs:
         with:
           name: binary_package
           path: upload/*
+
+      - name: Upload DOWNLOADS.txt
+        uses: actions/upload-artifact@v2.2.3
+        with:
+          name: downloads-info-MacOS
+          path: DOWNLOADS.txt
+
+      - name: Upload downloads
+        uses: actions/upload-artifact@v2.2.3
+        with:
+          name: downloads-MacOS
+          path: downloads
         
       - name: Generate artifact hashes
         shell: bash
