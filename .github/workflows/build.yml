@@ -11,7 +11,11 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - uses: actions/checkout@v4.2.2
 
       - name: Build setup
         run: ./setup-build.sh
@@ -20,19 +24,19 @@ jobs:
         run: ./build.sh
         
       - name: Upload package
-        uses: actions/upload-artifact@v2.2.3
+        uses: actions/upload-artifact@v4.5.0
         with:
-          name: binary_package
+          name: binary_package_ubuntu
           path: upload/*
 
       - name: Upload DOWNLOADS.txt
-        uses: actions/upload-artifact@v2.2.3
+        uses: actions/upload-artifact@v4.5.0
         with:
           name: downloads-info-Ubuntu
           path: DOWNLOADS.txt
 
       - name: Upload downloads
-        uses: actions/upload-artifact@v2.2.3
+        uses: actions/upload-artifact@v4.5.0
         with:
           name: downloads-Ubuntu
           path: downloads
@@ -56,7 +60,7 @@ jobs:
     steps:
       - name: Install cosign
         #if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3.0.2
+        uses: sigstore/cosign-installer@v3.7.0
 
       - name: Sign artifact hashes
         #if: ${{ github.event_name != 'pull_request' }}
@@ -65,10 +69,14 @@ jobs:
           cosign sign-blob -y ARTIFACT_SHA256SUMS
 
   build_macos:
-    runs-on: macos-11
+    runs-on: macos-13
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - uses: actions/checkout@v4.2.2
 
       - name: Build setup
         run: ./setup-build.sh
@@ -77,19 +85,19 @@ jobs:
         run: ./build.sh
         
       - name: Upload Package
-        uses: actions/upload-artifact@v2.2.3
+        uses: actions/upload-artifact@v4.5.0
         with:
-          name: binary_package
+          name: binary_package_macos
           path: upload/*
 
       - name: Upload DOWNLOADS.txt
-        uses: actions/upload-artifact@v2.2.3
+        uses: actions/upload-artifact@v4.5.0
         with:
           name: downloads-info-MacOS
           path: DOWNLOADS.txt
 
       - name: Upload downloads
-        uses: actions/upload-artifact@v2.2.3
+        uses: actions/upload-artifact@v4.5.0
         with:
           name: downloads-MacOS
           path: downloads
@@ -113,10 +121,71 @@ jobs:
     steps:
       - name: Install cosign
         #if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3.0.2
+        uses: sigstore/cosign-installer@v3.7.0
 
       - name: Sign artifact hashes
         #if: ${{ github.event_name != 'pull_request' }}
         run: |
           echo ${{ needs.build_macos.outputs.artifact_hashes }} | base64 -d > ARTIFACT_SHA256SUMS
+          cosign sign-blob -y ARTIFACT_SHA256SUMS
+
+  build_macos_aarch64:
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - uses: actions/checkout@v4.2.2
+
+      - name: Build setup
+        run: ./setup-build.sh
+      
+      - name: Build
+        run: ./build.sh
+        
+      - name: Upload Package
+        uses: actions/upload-artifact@v4.5.0
+        with:
+          name: binary_package_macos_aarch64
+          path: upload/*
+
+      - name: Upload DOWNLOADS.txt
+        uses: actions/upload-artifact@v4.5.0
+        with:
+          name: downloads-info-MacOS-AArch64
+          path: DOWNLOADS.txt
+
+      - name: Upload downloads
+        uses: actions/upload-artifact@v4.5.0
+        with:
+          name: downloads-MacOS-AArch64
+          path: downloads
+        
+      - name: Generate artifact hashes
+        shell: bash
+        id: hash
+        run: |
+          cd upload && echo "artifact_hashes=$(shasum -a 256 * | base64)" >> "$GITHUB_OUTPUT"
+
+    outputs:
+      artifact_hashes: ${{ steps.hash.outputs.artifact_hashes }}
+
+  # Sign in a separate job to limit ID token exposure
+  sign_macos_aarch64:
+    needs: [build_macos_aarch64]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      
+    steps:
+      - name: Install cosign
+        #if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3.7.0
+
+      - name: Sign artifact hashes
+        #if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          echo ${{ needs.build_macos_aarch64.outputs.artifact_hashes }} | base64 -d > ARTIFACT_SHA256SUMS
           cosign sign-blob -y ARTIFACT_SHA256SUMS
