@@ -23,7 +23,11 @@ if [ $(uname -s) = "Linux" ]; then
 elif [ $(uname -s) = "Darwin" ]; then
 
     VFDEPS_PARENT_DIR=/usr/local
-    VFDEPS_PLATFORM=macos
+    if [ "$(uname -p)" = arm ]; then
+      VFDEPS_PLATFORM=macos-aarch64
+    else
+      VFDEPS_PLATFORM=macos
+    fi
 
     VFDEPS_DIR=$VFDEPS_PARENT_DIR/$VFDEPS_DIRNAME
 
