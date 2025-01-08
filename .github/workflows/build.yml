@@ -26,7 +26,7 @@ jobs:
       - name: Upload package
         uses: actions/upload-artifact@v4.5.0
         with:
-          name: binary_package
+          name: binary_package_ubuntu
           path: upload/*
 
       - name: Upload DOWNLOADS.txt
@@ -87,7 +87,7 @@ jobs:
       - name: Upload Package
         uses: actions/upload-artifact@v4.5.0
         with:
-          name: binary_package
+          name: binary_package_macos
           path: upload/*
 
       - name: Upload DOWNLOADS.txt
@@ -148,19 +148,19 @@ jobs:
       - name: Upload Package
         uses: actions/upload-artifact@v4.5.0
         with:
-          name: binary_package
+          name: binary_package_macos_aarch64
           path: upload/*
 
       - name: Upload DOWNLOADS.txt
         uses: actions/upload-artifact@v4.5.0
         with:
-          name: downloads-info-MacOS
+          name: downloads-info-MacOS-AArch64
           path: DOWNLOADS.txt
 
       - name: Upload downloads
         uses: actions/upload-artifact@v4.5.0
         with:
-          name: downloads-MacOS
+          name: downloads-MacOS-AArch64
           path: downloads
         
       - name: Generate artifact hashes
