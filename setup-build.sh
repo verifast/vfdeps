@@ -12,8 +12,18 @@ if [ $(uname -s) = "Linux" ]; then
   sudo apt-get install -y --no-install-recommends \
        git wget ca-certificates make m4 \
        gcc patch unzip libgtk2.0-dev \
-       valac libgtksourceview2.0-dev \
+       valac \
        ninja-build
+  if ! sudo apt-get install -y --no-install-recommends libgtksourceview2.0-dev; then
+    # libgtksourceview2.0-dev is not in recent Ubuntu releases, so add focal (20.04 LTS) repo
+    if [ "$(uname -m)" = aarch64 ]; then
+      sudo add-apt-repository -y "deb http://ports.ubuntu.com/ubuntu-ports/ focal universe"
+    else
+      sudo add-apt-repository -y "deb http://mirrors.kernel.org/ubuntu/ focal universe"
+    fi
+    sudo apt-get update
+    sudo apt-get install -y --no-install-recommends libgtksourceview2.0-dev
+  fi
 
 elif [ $(uname -s) = "Darwin" ]; then
   #brew update
