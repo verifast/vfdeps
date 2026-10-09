@@ -14,7 +14,11 @@ UPLOAD_DIR=$BUILD_DIR/upload
 if [ $(uname -s) = "Linux" ]; then
 
     VFDEPS_PARENT_DIR=/tmp
-    VFDEPS_PLATFORM=linux
+    if [ "$(uname -m)" = aarch64 ]; then
+      VFDEPS_PLATFORM=linux-aarch64
+    else
+      VFDEPS_PLATFORM=linux
+    fi
 
     VFDEPS_DIR=$VFDEPS_PARENT_DIR/$VFDEPS_DIRNAME
 
