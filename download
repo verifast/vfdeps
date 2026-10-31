@@ -2,6 +2,10 @@
 
 set -e
 
+# $1 download output path
+# $2 URL
+# $3 expected SHA-256 hash
+
 curl -Lfo $1 $2
 SHASUM="$(shasum -a 256 $1)"
 HASH="${SHASUM%% *}"
@@ -9,7 +13,11 @@ echo "$SHASUM $2" >> DOWNLOADS.txt
 if [[ "$HASH" != "$3" ]]
 then
   echo "Actual SHA-256 hash $HASH of $1 does not match expected hash $3"
-  exit 1
+  if [ "${UPDATE_HASHES:-0}" -ne 0 ]; then
+    echo "s/${3}/${HASH}/" >> update_hashes.sed
+  else
+    exit 1
+  fi
 fi
 mkdir -p downloads
 cp $1 downloads/$1

@@ -13,3 +13,14 @@ This repository's GitHub Actions workflow signs artifacts using [sigstore](https
 cd path/to/artifact_dir && shasum -a 256 artifact_name > SHASUMS && shasum -a 256 SHASUMS
 ```
 Then look up that hash in [Rekor](https://search.sigstore.dev/) and check that it was signed by a GitHub Actions workflow of this repository. If the hash is not in Rekor or does not map to this repository, do not trust it.
+
+## Updating dependencies' hashes
+
+The hashes of Vfdeps's dependencies should not change unless that dependency's version is changed. To update the hashes of Vfdeps's dependencies, such as after updating their versions, run
+
+```bash
+make -pRrq | sed -Ene 's/^([^ #]+\.tar\.gz):$/\1/p' | xargs make -B UPDATE_HASHES=1
+sed -i.bak -f update_hashes.sed Makefile
+```
+
+to download the dependencies, compute their hashes, and update the Makefile accordingly.
