@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e # Stop as soon as a command fails.
 set -x # Print what is being executed.
@@ -18,7 +18,10 @@ if [ $(uname -s) = "Linux" ]; then
 
     VFDEPS_DIR=$VFDEPS_PARENT_DIR/$VFDEPS_DIRNAME
 
-    make PREFIX=$VFDEPS_DIR
+    NUM_CPU="$(nproc || echo 1)"
+    echo "using ${NUM_CPU} jobs"
+
+    make -j"${NUM_CPU}" -Otarget PREFIX=$VFDEPS_DIR
 
 elif [ $(uname -s) = "Darwin" ]; then
 
@@ -31,12 +34,15 @@ elif [ $(uname -s) = "Darwin" ]; then
 
     VFDEPS_DIR=$VFDEPS_PARENT_DIR/$VFDEPS_DIRNAME
 
+    NUM_CPU="$(sysctl -n hw.ncpu || echo 1)"
+    echo "using ${NUM_CPU} jobs"
+
     sudo mkdir $VFDEPS_DIR
     sudo chown -R $(whoami):admin /usr/local/*
 
     export PKG_CONFIG_PATH=/usr/local/opt/libffi/lib/pkgconfig
 
-    make PREFIX=$VFDEPS_DIR
+    make -j"${NUM_CPU}" PREFIX=$VFDEPS_DIR
 
 else
 

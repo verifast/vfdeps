@@ -8,35 +8,35 @@ on:
 
 jobs:
   build_ubuntu:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
-          python-version: '3.8'
+          python-version: '3.11'
 
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7
 
       - name: Build setup
-        run: ./setup-build.sh
+        run: ./setup-build.sh add_focal_repository
       
       - name: Build
         run: ./build.sh
         
       - name: Upload package
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v7
         with:
           name: binary_package_ubuntu
           path: upload/*
 
       - name: Upload DOWNLOADS.txt
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v7
         with:
           name: downloads-info-Ubuntu
           path: DOWNLOADS.txt
 
       - name: Upload downloads
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v7
         with:
           name: downloads-Ubuntu
           path: downloads
@@ -58,6 +58,11 @@ jobs:
       id-token: write
       
     steps:
+      # TODO: Should upgrade to cosign-installer v4? It will upgrade to Cosign
+      # v3.[1] Installer v4 is “strongly recommended”.[2]
+      #
+      # 1: https://github.com/sigstore/cosign-installer/releases/tag/v3.10.1
+      # 2: https://github.com/sigstore/cosign-installer/releases/tag/v4.1.0
       - name: Install cosign
         #if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3.7.0
@@ -69,14 +74,14 @@ jobs:
           cosign sign-blob -y ARTIFACT_SHA256SUMS
 
   build_macos:
-    runs-on: macos-13
+    runs-on: macos-15-intel
 
     steps:
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
-          python-version: '3.8'
+          python-version: '3.11'
 
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7
 
       - name: Build setup
         run: ./setup-build.sh
@@ -85,19 +90,19 @@ jobs:
         run: ./build.sh
         
       - name: Upload Package
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v7
         with:
           name: binary_package_macos
           path: upload/*
 
       - name: Upload DOWNLOADS.txt
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v7
         with:
           name: downloads-info-MacOS
           path: DOWNLOADS.txt
 
       - name: Upload downloads
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v7
         with:
           name: downloads-MacOS
           path: downloads
@@ -119,6 +124,7 @@ jobs:
       id-token: write
       
     steps:
+      # TODO: Upgrade? idem.
       - name: Install cosign
         #if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3.7.0
@@ -133,11 +139,11 @@ jobs:
     runs-on: macos-14
 
     steps:
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
-          python-version: '3.8'
+          python-version: '3.11'
 
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7
 
       - name: Build setup
         run: ./setup-build.sh
@@ -146,19 +152,19 @@ jobs:
         run: ./build.sh
         
       - name: Upload Package
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v7
         with:
           name: binary_package_macos_aarch64
           path: upload/*
 
       - name: Upload DOWNLOADS.txt
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v7
         with:
           name: downloads-info-MacOS-AArch64
           path: DOWNLOADS.txt
 
       - name: Upload downloads
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v7
         with:
           name: downloads-MacOS-AArch64
           path: downloads
@@ -180,6 +186,7 @@ jobs:
       id-token: write
       
     steps:
+      # TODO: Upgrade? idem.
       - name: Install cosign
         #if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3.7.0
